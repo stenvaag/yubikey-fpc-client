@@ -1,0 +1,5 @@
+Yubikey-fpc-client NEWS -- History of user-visible changes.    -*- outline -*-
+
+* Version 1.00 (released 2013-09-28)
+
+** Initial release, code from yubico-c-client 2.11

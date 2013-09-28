@@ -1,0 +1,8 @@
+#!/bin/sh
+
+mkdir -p obj
+./clean
+fpc -g -B -Fu../lnet/lib -FE./obj selftest.pas
+mv obj/selftest selftest
+fpc -g -B -Fu../lnet/lib -FE./obj tool.pas
+mv ./obj/tool ykclient

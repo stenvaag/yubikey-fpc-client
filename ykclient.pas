@@ -328,25 +328,28 @@ end;
 
 function GetParam(params: TStrings; const key: String): String;
   var
-    keyEq: String;
+    keyEq, line: String;
     i, keyLen: Integer;
 begin
   Result := '';
   keyEq := key + '=';
   keyLen := Length(keyEq);
   for i := 0 to params.Count - 1 do
-    if Copy(params[i], 1, keyLen) = keyEq then
+  begin
+    line := params[i];
+    if StrLComp(PChar(line), PChar(keyEq), keyLen) = 0 then
     begin
-      Result := Copy(params[i], keyLen + 1, 128);
+      Result := Copy(line, keyLen + 1, Length(line) - keyLen);
       Break;
     end;
+  end;
 end; 
   
 procedure THTTPHandler.ClientDoneInput(ASocket: TLHTTPClientSocket);
 var
    i : Integer;
    body: TStringList;
-   h, status: String;
+   h, status, line: String;
 begin
   ASocket.Disconnect;
   if FError or (FParams.FStatus <> '') then
@@ -357,13 +360,16 @@ begin
   try
     body.Text := FBuffer;
     for i := body.Count - 1 downto 0 do
-      if Pos('=', body[i]) = 0 then
+    begin
+      line := body[i];
+      if Pos('=', line) = 0 then
         body.delete(i)
-      else if Copy(body[i], 1, 2) = 'h=' then
+      else if StrLComp(PChar(line), 'h=', 2) = 0 then
       begin
-        h := Copy(body[i], 3, 128);
+        h := Copy(line, 3, Length(line) - 2);
         body.delete(i);
       end;
+    end;
     if FParams.FOwner.FVerifySignature then
       if h = '' then
       begin
@@ -465,27 +471,13 @@ begin
 end;
 
 function TYKClient.GetClientKeyHex: String;
-  const
-    HEXCHAR: array[0..15] of Char = (
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f');
   var
     len: Integer;
-    binP: PByte;
-    hexP: PChar;
 begin
   len := Length(FClientKey);
   SetLength(Result, 2 * len);
-  binP := PByte(FClientKey);
-  hexP := PChar(Result);
-  while len > 0 do
-  begin
-    hexP^ := HEXCHAR[binP^ shr 4]; 
-    Inc(hexP);
-    hexP^ := HEXCHAR[binP^ and $f]; 
-    Inc(hexP);
-    Inc(binP);
-    Dec(len);
-  end;
+  BinToHex(PChar(FClientKey), PChar(Result), len);
+  Result := LowerCase(Result);
 end;
 
 procedure TYKClient.SetClientKeyHex(const AKeyHex: String);
